@@ -66,6 +66,49 @@ router.post('/',upload.single('board_image'),async (req,res) => {
 })
 
 router.delete('/:board_idx',async (req,res) => {
+    let board_idx = req.params.board_idx
+    
+    if(!board_idx){
+        res.status(400).send({
+            result : false,
+            status : 400,
+            message : "Null Value!"
+        })
+    } else {
+        let checkQuery = 'SELECT * FROM board WHERE board_idx = ?'
+        let checkResult = await db.queryParam_Arr(checkQuery,[board_idx])
+
+        if(!checkResult){
+            res.status(500).send({
+                result : false,
+                status : 500,
+                message : "Internal Server Error!"
+            })
+        } else if(checkResult.length === 1){
+            let deleteQuery = 'DELETE FROM board WHERE board_idx = ?'
+            let deleteResult = await db.queryParam_Arr(deleteQuery,[board_idx])
+
+            if(!deleteResult){
+                res.status(500).send({
+                    result : false,
+                    status : 500,
+                    message : "Internal Server Error!"
+                })
+            } else {
+                res.status(200).send({
+                    result : true,
+                    status : 200,
+                    message : "Successfully delete board"
+                })
+            }
+        } else {
+            res.status(400).send({
+                result : false,
+                status : 400,
+                message : "Board_idx Error!"
+            })
+        }
+    }
     
 })
 
