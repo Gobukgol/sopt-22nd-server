@@ -4,6 +4,8 @@ const router = express.Router()
 const crypto = require('crypto-promise')
 const db = require('../../module/pool.js')
 
+const jwt = require('../../module/jwt.js')
+
 router.post('/',async (req,res)=>{
     let user_id = req.body.user_id;
     let user_pw = req.body.user_pw;
@@ -28,11 +30,12 @@ router.post('/',async (req,res)=>{
         } else if(checkResult.length === 1){
             let hashed = await crypto.pbkdf2(user_pw,checkResult[0].user_salt,100000,32,'sha512')
             if(hashed.toString('base64') === checkResult[0].user_pw){
+                let token = jwt.sign(checkResult[0].user_idx)
                 res.status(201).send({
                     result : true,
                     status : 201,
                     message : "Login Success",
-                    user_idx : checkResult[0].user_idx
+                    token : token
                 })
             } else {
                 console.log("PW error!")
@@ -52,3 +55,5 @@ router.post('/',async (req,res)=>{
         }
     }
 })
+
+module.exports = router

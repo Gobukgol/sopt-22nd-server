@@ -6,6 +6,8 @@ const upload = require('../../config/multer.js')
 
 const moment = require('moment')
 
+const jwt = require('../../module/jwt.js')
+
 router.get('/',async (req,res) => {
     let getListQuery = 'SELECT * FROM board ORDER BY board_idx DESC'
     let getListResult = await db.queryParam_None(getListQuery)
@@ -27,41 +29,61 @@ router.get('/',async (req,res) => {
 })
 
 router.post('/',upload.single('board_image'),async (req,res) => {
-    let user_idx = req.body.user_udx
+    //let user_idx = req.body.user_idx
+    let user_idx
+    let token = req.headers.user_token
     let board_title = req.body.board_title
     let board_content = req.body.board_content
     let board_image
-    if(!req.files){
+    if(!req.file){
         board_image = null
     } else {
         board_image = req.file.location
     }
 
-    if(!user_idx || !board_title || !board_content){
+    if(token === undefined || token === null){
         res.status(400).send({
             result : false,
             status : 400,
-            message : "Null Value!"
+            message : "Token value error!"
         })
     } else {
-        let board_writetime = moment().format('YYYY-MM-DD HH:mm:ss');
-        let insertBoardQuery = 'INSERT INTO board (user_idx,board_title,board_content,board_writetime,board_image)'
-        let insertBoardResult = await db.queryParam_Arr(insertBoardQuery,[user_idx,board_title,board_content,board_writetime,board_image])
-
-        if(!insertBoardResult){
-            res.status(500).send({
+        if(!board_title || !board_content){
+            res.status(400).send({
                 result : false,
-                status : 500,
-                message : "Internal Server Error!"
+                status : 400,
+                message : "Null Value!"
             })
         } else {
-            res.status(201).send({
-                result : true,
-                status : 200,
-                message : "Successfully regist board"
-            })
+            let decoded = jwt.verify(token)
+    
+            if(decoded == -1){
+                res.status(500).send({
+                    result : false,
+                    status : 500,
+                    message : "Token Decoded Error!"
+                })
+            } else {
+                user_idx = decoded.user_idx
+                let board_writetime = moment().format('YYYY-MM-DD HH:mm:ss');
+                let insertBoardQuery = 'INSERT INTO board (user_idx,board_title,board_content,board_writetime,board_image) VALUES (?,?,?,?,?)'
+                let insertBoardResult = await db.queryParam_Arr(insertBoardQuery,[user_idx,board_title,board_content,board_writetime,board_image])
+        
+                if(!insertBoardResult){
+                    res.status(500).send({
+                        result : false,
+                        status : 500,
+                        message : "Internal Server Error!"
+                    })
+                } else {
+                    res.status(201).send({
+                        result : true,
+                        status : 200,
+                        message : "Successfully regist board"
+                    })
+                }
+            }
         }
-
     }
 })
 

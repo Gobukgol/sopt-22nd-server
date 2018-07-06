@@ -16,7 +16,7 @@ router.post('/',async (req,res) => {
         })
     } else {
         let checkQuery = 'SELECT * FROM user WHERE user_id = ?'
-        let checkResult = await db.queryParamm_Arr(checkQuery,[user_id]);
+        let checkResult = await db.queryParam_Arr(checkQuery,[user_id]);
 
         if(!checkResult){
             res.status(500).send({
@@ -35,7 +35,7 @@ router.post('/',async (req,res) => {
             let hashed = await crypto.pbkdf2(user_pw,salt.toString('base64'),100000,32,'sha512')
 
             let insertQuery = 'INSERT INTO user (user_id,user_pw,user_salt) VALUES (?,?,?)'
-            let insertResult = await db.queryParamm_Arr(insertQuery,[user_id,hashed.toString('base64'),salt.toString('base64')]);
+            let insertResult = await db.queryParam_Arr(insertQuery,[user_id,hashed.toString('base64'),salt.toString('base64')]);
 
             if(!insertResult){
                 res.status(500).send({
